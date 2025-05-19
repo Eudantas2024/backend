@@ -8,6 +8,9 @@ const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
+// 🔗 Importação do modelo User
+const User = require("./models/User"); // Certifique-se de que o caminho está correto
+
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
