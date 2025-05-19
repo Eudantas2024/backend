@@ -56,5 +56,5 @@ app.use("/api/opinioes", opinioesRoute);
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`🚀 Servidor rodando na porta ${port}`);
-  console.log(`🔗 Acesse a API em: https://backend-yv4g.onrender.com`);
+  console.log(`🔗 Acesse a API em: https://backend-goaq.onrender.com`);
 });
