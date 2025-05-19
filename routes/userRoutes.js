@@ -35,13 +35,16 @@ router.post("/login", async (req, res) => {
     try {
         const { username, password } = req.body;
         const trimmedUsername = username.trim();
+        const user = await User.findOne({ username: trimmedUsername });
 
-        const user = await User.findOne({ username: username.trim() });
+        console.log(`🔍 Buscando usuário: ${trimmedUsername}`);
+        console.log("✅ Usuário encontrado:", user);
+
 
         if (!user) {
             console.log("❌ Usuário não encontrado!");
             return res.status(401).json({ message: "❌ Usuário não encontrado." });
-            
+
         }
         console.log(`✅ Usuário encontrado: ${user.username}`);
 
