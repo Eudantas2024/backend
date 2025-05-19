@@ -33,24 +33,24 @@ router.post("/register", async (req, res) => {
 
 // ✅ Login de Usuário
 router.post("/login", async (req, res) => {
-    console.log("🔍 Requisição de login recebida:", req.body);
+    const { username, password } = req.body;
 
     try {
-        const { username, password } = req.body;
         const user = await User.findOne({ username });
-
         if (!user || !(await bcrypt.compare(password, user.password))) {
             return res.status(401).json({ message: "❌ Usuário ou senha incorretos." });
         }
 
-        const token = jwt.sign({ username: user.username, id: user._id }, jwtSecret, { expiresIn: "1h" });
+        // ✅ Gera o token corretamente
+        const token = jwt.sign({ username: user.username, id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+
         res.json({ message: "✅ Login bem-sucedido!", token });
-        ;
     } catch (error) {
         console.error("❌ Erro ao realizar login:", error);
         res.status(500).json({ message: "❌ Erro interno no login." });
     }
 });
+
 
 // ✅ Perfil do Usuário (Rota Protegida)
 router.get("/profile", async (req, res) => {
