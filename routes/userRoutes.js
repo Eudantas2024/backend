@@ -10,6 +10,10 @@ const jwtSecret = process.env.JWT_SECRET;
 router.post("/register", async (req, res) => {
     try {
         const { username, password } = req.body;
+        const trimmedUsername = username.trim(); // ✅ Remove espaços extras
+
+        const existingUser = await User.findOne({ username: trimmedUsername });
+
 
         // ✅ Verifica se o usuário já existe
         const existingUser = await User.findOne({ username });
@@ -37,8 +41,13 @@ router.post("/login", async (req, res) => {
 
     try {
         const user = await User.findOne({ username });
-        if (!user || !(await bcrypt.compare(password, user.password))) {
-            return res.status(401).json({ message: "❌ Usuário ou senha incorretos." });
+        if (!user) {
+            return res.status(401).json({ message: "❌ Usuário não encontrado." });
+        }
+
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) {
+            return res.status(401).json({ message: "❌ Senha incorreta." });
         }
 
         // ✅ Gera o token corretamente
@@ -51,18 +60,28 @@ router.post("/login", async (req, res) => {
     }
 });
 
+// ✅ Middleware de autenticação JWT
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+
+    if (!token) {
+        return res.status(401).json({ message: "❌ Acesso negado! Token não encontrado." });
+    }
+
+    jwt.verify(token, jwtSecret, (err, user) => {
+        if (err) {
+            return res.status(403).json({ message: "❌ Token inválido!" });
+        }
+        req.user = user;
+        next();
+    });
+}
 
 // ✅ Perfil do Usuário (Rota Protegida)
-router.get("/profile", async (req, res) => {
+router.get("/profile", authenticateToken, async (req, res) => {
     try {
-        const token = req.headers.authorization?.split(" ")[1];
-
-        if (!token) {
-            return res.status(401).json({ message: "❌ Acesso negado! Token não encontrado." });
-        }
-
-        const decoded = jwt.verify(token, jwtSecret);
-        const user = await User.findById(decoded.id).select("-password"); // Remove a senha dos dados retornados
+        const user = await User.findById(req.user.id).select("-password");
 
         if (!user) {
             return res.status(404).json({ message: "❌ Usuário não encontrado." });
@@ -74,5 +93,8 @@ router.get("/profile", async (req, res) => {
         res.status(500).json({ message: "❌ Erro interno ao buscar perfil." });
     }
 });
+
+
+
 
 module.exports = router;
