@@ -52,9 +52,14 @@ app.use("/api/users", userRoutes);
 const opinioesRoute = require("./routes/opinioes");
 app.use("/api/opinioes", opinioesRoute);
 
+// ✅ Nova rota para `/api/conteudo`
+app.get("/api/conteudo", authenticateToken, (req, res) => {
+    res.json({ message: "✅ Conteúdo carregado com sucesso!" });
+});
+
 // ✅ Configuração correta da porta para Render
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
-  console.log(`🚀 Servidor rodando na porta ${port}`);
-  console.log(`🔗 Acesse a API em: https://backend-goaq.onrender.com`);
+    console.log(`🚀 Servidor rodando na porta ${port}`);
+    console.log(`🔗 Acesse a API em: https://backend-goaq.onrender.com`);
 });
