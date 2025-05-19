@@ -36,18 +36,24 @@ router.post("/login", async (req, res) => {
         const { username, password } = req.body;
         const trimmedUsername = username.trim();
 
-        const user = await User.findOne({ username: trimmedUsername });
+        const user = await User.findOne({ username: username.trim() });
+
         if (!user) {
+            console.log("❌ Usuário não encontrado!");
             return res.status(401).json({ message: "❌ Usuário não encontrado." });
+            
         }
+        console.log(`✅ Usuário encontrado: ${user.username}`);
 
         const validPassword = await bcrypt.compare(password.trim(), user.password);
+        console.log(`🛠 Comparação de senha: ${validPassword}`);
+
         if (!validPassword) {
             return res.status(401).json({ message: "❌ Senha incorreta." });
         }
 
         // ✅ Gera o token corretamente
-        const token = jwt.sign({ username: user.username, id: user._id }, jwtSecret, { expiresIn: "1h" });
+        const token = jwt.sign({ username: user.username, id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
         res.json({ message: "✅ Login bem-sucedido!", token });
     } catch (error) {
