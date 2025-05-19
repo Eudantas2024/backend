@@ -12,18 +12,15 @@ router.post("/register", async (req, res) => {
         const { username, password } = req.body;
         const trimmedUsername = username.trim(); // ✅ Remove espaços extras
 
-        const existingUser = await User.findOne({ username: trimmedUsername });
-
-
         // ✅ Verifica se o usuário já existe
-        const existingUser = await User.findOne({ username });
+        const existingUser = await User.findOne({ username: trimmedUsername });
         if (existingUser) {
             return res.status(400).json({ message: "❌ Usuário já cadastrado." });
         }
 
-        // ✅ Criação do novo usuário
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = new User({ username, password: hashedPassword });
+        // ✅ Criação do novo usuário com senha criptografada
+        const hashedPassword = await bcrypt.hash(password.trim(), 10);
+        const newUser = new User({ username: trimmedUsername, password: hashedPassword });
         await newUser.save();
 
         res.json({ message: "✅ Usuário registrado com sucesso!" });
@@ -33,25 +30,24 @@ router.post("/register", async (req, res) => {
     }
 });
 
-
-
 // ✅ Login de Usuário
 router.post("/login", async (req, res) => {
-    const { username, password } = req.body;
-
     try {
-        const user = await User.findOne({ username });
+        const { username, password } = req.body;
+        const trimmedUsername = username.trim();
+
+        const user = await User.findOne({ username: trimmedUsername });
         if (!user) {
             return res.status(401).json({ message: "❌ Usuário não encontrado." });
         }
 
-        const validPassword = await bcrypt.compare(password, user.password);
+        const validPassword = await bcrypt.compare(password.trim(), user.password);
         if (!validPassword) {
             return res.status(401).json({ message: "❌ Senha incorreta." });
         }
 
         // ✅ Gera o token corretamente
-        const token = jwt.sign({ username: user.username, id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+        const token = jwt.sign({ username: user.username, id: user._id }, jwtSecret, { expiresIn: "1h" });
 
         res.json({ message: "✅ Login bem-sucedido!", token });
     } catch (error) {
@@ -69,11 +65,11 @@ function authenticateToken(req, res, next) {
         return res.status(401).json({ message: "❌ Acesso negado! Token não encontrado." });
     }
 
-    jwt.verify(token, jwtSecret, (err, user) => {
+    jwt.verify(token, jwtSecret, (err, decoded) => {
         if (err) {
             return res.status(403).json({ message: "❌ Token inválido!" });
         }
-        req.user = user;
+        req.user = decoded;
         next();
     });
 }
@@ -93,8 +89,5 @@ router.get("/profile", authenticateToken, async (req, res) => {
         res.status(500).json({ message: "❌ Erro interno ao buscar perfil." });
     }
 });
-
-
-
 
 module.exports = router;
